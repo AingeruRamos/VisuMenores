@@ -1,0 +1,6 @@
+data/*
+
+__pycache__
+components/__pycache__
+components/elements/__pycache__
+figures/__pycache__

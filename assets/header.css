@@ -1,0 +1,9 @@
+body {
+    margin: 0px;
+}
+
+hr {
+    height: 3px;
+    background-color: #004996;
+    border: none;
+}
