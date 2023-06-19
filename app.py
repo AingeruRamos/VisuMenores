@@ -36,11 +36,11 @@ app.layout = html.Div(children=[
             ###############################
             html.Div(children=[
                 html.H4('Información del Menor:'),
-                html.Div(children=tags.TagList(data.basicInfo, tags.BasicTag), style=stl.row),
+                html.Div(children=tags.TagList(data.getBasicInfo(), tags.BasicTag), style=stl.row),
 
                 html.Hr(),
 
-                html.Div(children=tags.TagList(data.stateInfo, tags.BasicTag), style=stl.row),
+                html.Div(children=tags.TagList(data.getStateInfo(), tags.BasicTag), style=stl.row),
             ], style=stl.panel),
             
             ###########################

@@ -3,50 +3,6 @@ from datetime import datetime, date
 from dateutil import relativedelta
 import math
 
-# PLANTILLAS
-
-basicInfoTemplate = [['Nombre','???'], ['Apellidos','??? ???'],
-                     ['Sexo',''], ['Fecha Nacimiento',''], 
-                     ['Edad',''], ['Origen','XXX'], 
-                     ['Minusvalía','']]
-
-stateInfoTemplate = [['Tipo Acogimiento',''], ['Fecha Inicio',''], 
-                     ['Responsable del Caso','???']]
-
-def loadBasicInfo(childData):
-    aux = basicInfoTemplate.copy()
-    aux[2][1] = list(childData['SEXO'])[0]
-    aux[3][1] = list(childData['FNACIMIENTO'])[0]
-    aux[6][1] = ('No' if list(childData['MINUSVALIDOS'])[0] == 'N' else 'Si')
-
-    start_date = datetime.strptime(aux[3][1], "%Y-%m-%d")
-
-    delta = relativedelta.relativedelta(date.today(), start_date)
-    aux[4][1] = f'{delta.years} años'
-
-    return aux
-
-def loadStateInfo(stateData):
-    aux = stateInfoTemplate.copy()
-
-    stateData = stateData.sort_values('FECHAINI', ascending=False)
-    tipoAcog = list(stateData['TIPOACOG'])[0]
-    fechaIni = list(stateData['FECHAINI'])[0]
-    fechaFin = list(stateData['FECHAFIN'])[0]
-    
-    if math.isnan(fechaFin):
-        if tipoAcog == 'F':
-            aux = [['Tipo Acogimiento', 'Familiar'], ['Desde', fechaIni], 
-               ['Familia Acogida', '???'], ['Responsable Caso', '???']]
-        elif tipoAcog == 'R':
-            aux = [['Tipo Acogimiento', 'Residencial'], ['Desde', fechaIni], 
-               ['Centro Acogida', '???'], ['Responsable Caso', '???']]
-    else:
-        aux = [['Tipo Acogimiento', 'Familia Original'], ['Desde', fechaFin], 
-               ['Responsable Caso', '???']]
-    return aux
-
-
 # TABLAS
 table_menores = pd.read_csv('./data/menores.csv')
 table_ayudas = pd.read_csv('./data/ayudas.csv')
@@ -75,105 +31,75 @@ table_notif = table_notif.iloc[: , 1:]
 table_acog = table_acog.iloc[: , 1:]
 table_medidas = table_medidas.iloc[: , 1:]
 
-# INFORMACIÓN DEL MENOR
-basicInfo = loadBasicInfo(table_menores)
-stateInfo = loadStateInfo(table_acog)
+def getBasicInfo():
+    aux = []
+    aux.append(['Nombre', '???'])
+    aux.append(['Apellidos', '??? ???'])
+    aux.append(['Sexo', list(table_menores['SEXO'])[0]])
+    aux.append(['Fecha Nacimiento', list(table_menores['FNACIMIENTO'])[0]])
+
+    startDate = datetime.strptime(aux[len(aux)-1][1], "%Y-%m-%d")
+    delta = relativedelta.relativedelta(date.today(), startDate)
+    aux.append(['Edad', f'{delta.years} años'])
+
+    aux.append(['Origen', 'XXX'])
+
+    isMinusvalidoText = ('No' if list(table_menores['MINUSVALIDOS'])[0] == 'N' else 'Si')
+    aux.append(['Minusvalía', isMinusvalidoText])
+
+    return aux
+
+def getStateInfo():
+    stateData = table_acog.sort_values('FECHAINI', ascending=False)
+    tipoAcog = list(stateData['TIPOACOG'])[0]
+    fechaIni = list(stateData['FECHAINI'])[0]
+    fechaFin = list(stateData['FECHAFIN'])[0]
+    
+    if math.isnan(fechaFin):
+        if tipoAcog == 'F':
+            aux = [['Tipo Acogimiento', 'Familiar'], ['Desde', fechaIni], 
+               ['Familia Acogida', '???'], ['Responsable Caso', '???']]
+        elif tipoAcog == 'R':
+            aux = [['Tipo Acogimiento', 'Residencial'], ['Desde', fechaIni], 
+               ['Centro Acogida', '???'], ['Responsable Caso', '???']]
+    else:
+        aux = [['Tipo Acogimiento', 'Familia Original'], ['Desde', fechaFin], 
+               ['Responsable Caso', '???']]
+    return aux
+
+def getInstancesOfThisYear(table, columnId):
+    actualYear = int(str(date.today())[0:4])
+    initYear = str(actualYear)
+    endYear = str(actualYear+1)
+    return table.query(f"{columnId} >= @initYear and {columnId} < @endYear")
 
 # INFORMACIÓN RECIENTE
 
 def getAyudasPeriodicasRecientes():
-    actual_year = int(str(date.today())[0:4])
-
-    init_filter_year = str(actual_year)
-    end_filter_year = str(actual_year+1)
-    table = table_ayudas.query("FECSOLIC >= @init_filter_year and FECSOLIC < @end_filter_year")
+    table = getInstancesOfThisYear(table_ayudas, 'FECSOLIC')
     table = table.query("TIPO=='P'")
-    ayudas = []
-    for _, row in table.iterrows():
-        concep = row['CONCEPTO']
-        cuantia = str(row['TOTAL'])+'€'
-        mensual = str(row['TOTALMES'])+'€'
-
-        ayudas.append([concep, cuantia, mensual])
     
-    return ayudas
+    return [[row['CONCEPTO'], row['TOTAL'], row['TOTALMES']] for _, row in table.iterrows()]
 
 def getAyudasNonPeriodicasRecientes():
-    actual_year = int(str(date.today())[0:4])
-
-    init_filter_year = str(actual_year)
-    end_filter_year = str(actual_year+1)
-    table = table_ayudas.query("FECSOLIC >= @init_filter_year and FECSOLIC < @end_filter_year")
+    table = getInstancesOfThisYear(table_ayudas, 'FECSOLIC')
     table = table.query("TIPO=='N'")
-    ayudas = []
-    for _, row in table.iterrows():
-        concep = row['CONCEPTO']
-        cuantia = str(row['TOTAL'])+'€'
-
-        ayudas.append([concep, cuantia])
     
-    return ayudas
+    return [[row['CONCEPTO'], row['TOTAL']] for _, row in table.iterrows()]
 
 def getNotificacionesRecientes():
-    actual_year = int(str(date.today())[0:4])
-
-    init_filter_year = str(actual_year)
-    end_filter_year = str(actual_year+1)
-    table = table_notif.query("FECNOTIF >= @init_filter_year and FECNOTIF < @end_filter_year")
+    table = getInstancesOfThisYear(table_notif, 'FECNOTIF')
     
-    notifs = []
-    for _, row in table.iterrows():
-        tipo = row['TIPO']
-        if 'O' in tipo:
-            tipo = 'Ordinaria'
-        elif 'I' in tipo:
-            tipo = 'Infractor'
-        elif 'E' in tipo:
-            tipo = 'Extranjero'
-
-        fecha = row['FECNOTIF']
-
-        notifs.append([tipo, fecha])
-    
-    return notifs
+    return [[row['TIPO'], row['FECNOTIF']] for _, row in table.iterrows()]
 
 def getAcogimientosRecientes():
     actual_year = int(str(date.today())[0:4])
-
-    init_filter_year = str(actual_year)
-    end_filter_year = str(actual_year+1)
- 
     table = table_acog[(table_acog['FECHAFIN'].isna()) | (table_acog['FECHAFIN'] == actual_year)]
-    
-    acogs = []
-    for _, row in table.iterrows():
-        tipo = row['TIPOACOG']
-        if 'F' in tipo:
-            tipo = 'Familiar'
-        elif 'R' in tipo:
-            tipo = 'Residencial'
 
-        fecha_ini = row['FECHAINI']
-
-        fecha_fin = row['FECHAFIN']
-
-        acogs.append([tipo, fecha_ini, fecha_fin])
-    
-    return acogs
+    return [[row['TIPOACOG'], row['FECHAINI'], row['FECHAFIN']] for _, row in table.iterrows()]
 
 def getMedidasRecientes():
     actual_year = int(str(date.today())[0:4])
-    
-    init_filter_year = str(actual_year)
-    end_filter_year = str(actual_year+1)
-
     table = table_medidas[(table_medidas['FECFIN'].isna()) | (table_medidas['FECFIN'] == actual_year)]
-    medidas = []
-    for _, row in table.iterrows():
-        tipo = row['MEDIDA']
-        fecha_res = row['FECRES']
-        fecha_fin = row['FECFIN']
-
-        medidas.append([tipo, fecha_res, fecha_fin])
     
-    return medidas
+    return [[row['MEDIDA'], row['FECRES'], row['FECFIN']] for _, row in table.iterrows()]
