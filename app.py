@@ -9,18 +9,16 @@ import components.elements.tagList as tags
 from components.registers import Registers
 from components.registers import FIGTYPE, FIGCONTENT
 
-from components.recentHelps import GetRecentHelps
+from components.recentAyuda import GetRecentAyuda
 from components.recentNotif import GetRecentNotif
 from components.recentAcog import GetRecentAcog
 from components.recentMedida import GetRecentMedida
 
 app = Dash(__name__)
 
-def setCookie(cookie_id, value):
-    callback_context.response.set_cookie(cookie_id, value)
-
-def getCookie(cookie_id):
-    return dict(flask.request.cookies)[cookie_id]
+###############################
+# ESTRUCTURA DE LA APLICACIÓN #
+###############################
 
 app.layout = html.Div(children=[
     html.H1(children='TFM - Demo Técnica', style={**stl.panel, **{'marginTop':'0px'}}),
@@ -52,6 +50,10 @@ app.layout = html.Div(children=[
                     html.Div('Gráfico', id='graph_button', style=stl.fig_buttons)
                     ], style=stl.fig_menu),
 
+                # Aquí se visualiza la información, bein modo Tabla o en modo Gráfica.
+                # Por defecto se muestra el modo Tabla.
+                # La figura a mostrar es devuelta pro la función Registers en el fichero registers.py.
+                # Existen eventos que modifican estas figuras.
                 html.Div(id='registers')
             ]
             ,style={**stl.panel, **stl.fig_container})
@@ -69,7 +71,7 @@ app.layout = html.Div(children=[
                 html.Div(id='gen_medida', children=['M'], style=stl.menu_button)
             ],style=stl.menu_container),
 
-            html.Div(id='recent_acts', children=GetRecentHelps(), style={**stl.ayudas_style})
+            html.Div(id='recent_acts', children=GetRecentAyuda(), style={**stl.ayudas_style})
         ],style={**stl.panel, 'padding':'0em'})
     ],style=stl.main_container),
 ], style=stl.body)
@@ -77,6 +79,23 @@ app.layout = html.Div(children=[
 ###########
 # EVENTOS #
 ###########
+#
+# Las siguientes funciones controlan los eventos de la aplicación; 'click' de botones en nuestro caso.
+#
+# Cada función de evento tiene asignada previamente que botones tiene que atender y sobre que partes de la estructura tiene efecto.
+# Esto se hace mediante los '@app.callback'. Las funciones de evento deben de devolver OBLIGATORIAMENTE todos los outputs que se le pidan.
+#
+# Plotly por defecto no permite que dos funciones de evento apunten a la misma salida, por lo que es necesario la instruccion 'allow_duplicate=True'
+# para que no aparezcan errores.
+#
+# A la hora de cargar la aplicación todos los eventos son activados, la instrucción prevent_initial_call=True y el uso de 'cookies'
+# como memoria de la aplicación sirven para evitar activaciones prematuras.
+
+def setCookie(cookie_id, value):
+    callback_context.response.set_cookie(cookie_id, value)
+
+def getCookie(cookie_id):
+    return dict(flask.request.cookies)[cookie_id]
 
 # CLICK EN LOS BOTONES SUPERIORES DE 'ACTIVIDAD RECIENTE'
 @app.callback(
@@ -93,7 +112,7 @@ def updateFigAndRecents(b1, b2, b3, b4):
     recent_panel = None
     if 'gen_ayuda' == ctx.triggered_id:
         fig_content = FIGCONTENT.AYUDAS
-        recent_panel = GetRecentHelps()
+        recent_panel = GetRecentAyuda()
     elif 'gen_notif' == ctx.triggered_id:
         fig_content = FIGCONTENT.NOTIF
         recent_panel = GetRecentNotif()
@@ -104,7 +123,7 @@ def updateFigAndRecents(b1, b2, b3, b4):
         fig_content = FIGCONTENT.MEDIDAS
         recent_panel = GetRecentMedida()
     else:
-        recent_panel = GetRecentHelps()
+        recent_panel = GetRecentAyuda()
 
     setCookie('fig_content', str(fig_content.value))
     setCookie('spawn', str(1))
@@ -145,7 +164,6 @@ def updateFig2(values):
     setCookie('fig_content', str(fig_content.value))
     setCookie('spawn', str(0))
     return Registers(FIGTYPE.TABLE, fig_content.value)
-
 
 ###################
 # FUNCION INICIAL #

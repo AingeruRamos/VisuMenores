@@ -12,7 +12,7 @@ def mapRawAyudaNoPerio(ayudaNoPerioItem):
     ayudaNoPerioItem[1] = str(ayudaNoPerioItem[1])+'€'
     return ayudaNoPerioItem
 
-def GetRecentHelps():
+def GetRecentAyuda():
     ayudaPerioItemList = data.getAyudasPeriodicasRecientes()
     ayudaPerioItemList = list(map(mapRawAyudaPerio, ayudaPerioItemList))
     contentAyudasPerio = tags.TagList(ayudaPerioItemList, tags.HelpTag) if len(ayudaPerioItemList) != 0 else ['No hay ayudas periódicas']

@@ -3,7 +3,7 @@ from enum import Enum
 import data
 import plotly.graph_objects as go
 
-from figures import getAyudasGraph, getNotifGraph, getAcogGraph, getMedidasGraph, getAyudasPGraph, getAyudasNGraph
+from graphs import getAyudasGraph, getNotifGraph, getAcogGraph, getMedidasGraph, getAyudasPGraph, getAyudasNGraph
 
 class FIGTYPE(Enum):
     TABLE=0 
@@ -17,28 +17,35 @@ class FIGCONTENT(Enum):
     AYUDAS_PERIO=4
     AYUDAS_NOPERIO=5
 
-def Registers(fig_type, fig_content):
+def Registers(figType, figContent):
+    """
+    Devuelve la figura a mostrar en el apartado 'Registros'
+    @param fig_type: Tipo de figura (Tabla o Gráfica)
+    @param fig_content: Contenido de la figura
+    @return: La figura a mostrar en 'Registros'
+    """
 
     fig = None
-    if fig_type == FIGTYPE.TABLE:
+
+    if figType == FIGTYPE.TABLE: # Modo Tabla
         table = None
-        if fig_content == FIGCONTENT.AYUDAS.value:
+        if figContent == FIGCONTENT.AYUDAS.value:
             table = data.table_ayudas
 
-        elif fig_content == FIGCONTENT.NOTIF.value:
+        elif figContent == FIGCONTENT.NOTIF.value:
             table = data.table_notif
 
-        elif fig_content == FIGCONTENT.ACOG.value:
+        elif figContent == FIGCONTENT.ACOG.value:
             table = data.table_acog
 
-        elif fig_content == FIGCONTENT.MEDIDAS.value:
+        elif figContent == FIGCONTENT.MEDIDAS.value:
             table = data.table_medidas
 
-        elif fig_content == FIGCONTENT.AYUDAS_PERIO.value:
+        elif figContent == FIGCONTENT.AYUDAS_PERIO.value:
             table = data.table_ayudas
             table = table.query("TIPO=='P'")
 
-        elif fig_content == FIGCONTENT.AYUDAS_NOPERIO.value:
+        elif figContent == FIGCONTENT.AYUDAS_NOPERIO.value:
             table = data.table_ayudas
             table = table.query("TIPO=='N'")
     
@@ -50,23 +57,23 @@ def Registers(fig_type, fig_content):
         
         fig = go.Figure(data=table_fig)
 
-    else:
-        if fig_content == FIGCONTENT.AYUDAS.value:
+    else: # Modo 'Gráfica'
+        if figContent == FIGCONTENT.AYUDAS.value:
             fig = getAyudasGraph()
 
-        elif fig_content == FIGCONTENT.NOTIF.value:
+        elif figContent == FIGCONTENT.NOTIF.value:
             fig = getNotifGraph()
 
-        elif fig_content == FIGCONTENT.ACOG.value:
+        elif figContent == FIGCONTENT.ACOG.value:
             fig = getAcogGraph()
 
-        elif fig_content == FIGCONTENT.MEDIDAS.value:
+        elif figContent == FIGCONTENT.MEDIDAS.value:
             fig = getMedidasGraph()
 
-        elif fig_content == FIGCONTENT.AYUDAS_PERIO.value:
+        elif figContent == FIGCONTENT.AYUDAS_PERIO.value:
             fig = getAyudasPGraph()
 
-        elif fig_content == FIGCONTENT.AYUDAS_NOPERIO.value:
+        elif figContent == FIGCONTENT.AYUDAS_NOPERIO.value:
             fig = getAyudasNGraph()
 
     fig.update_layout(

@@ -3,34 +3,35 @@ from datetime import datetime, date
 from dateutil import relativedelta
 import math
 
-# TABLAS
+# CARGA DE LAS TABLAS INICIALES
 table_menores = pd.read_csv('./data/menores.csv')
 table_ayudas = pd.read_csv('./data/ayudas.csv')
 table_notif = pd.read_csv('./data/notificaciones.csv')
 table_acog = pd.read_csv('./data/acogimientos.csv')
 table_medidas = pd.read_csv('./data/medidas.csv')
 
-##########################
-altas = table_menores.query("SITUACION=='A'")
+# SELECCIÓN DEL MENOR A VISUALIZAR
+altas = table_menores.query("SITUACION=='A'") # Solo se escoge entre menores dados de alta
 cods = list(altas['CODIGO'])
 #SELECTED_COD = 'e530bdf24d6fb6dcbd21c41f97fc2da62a7d32302dcce656fac6307d52ee87b1'
-SELECTED_COD = cods[563]
+SELECTED_COD = cods[563] # Selección de forma manual
 ##########################
 
-# TABLAS
+# FILTRADO DE LAS INSTANCIAS DEL MENOR SELECCIONADO
 table_menores = table_menores[table_menores['CODIGO'] == SELECTED_COD]
 table_ayudas = table_ayudas[table_ayudas['CODIGO'] == SELECTED_COD]
 table_notif = table_notif[table_notif['CODIGO'] == SELECTED_COD]
 table_acog = table_acog[table_acog['COD'] == SELECTED_COD]
 table_medidas = table_medidas[table_medidas['CODIGO'] == SELECTED_COD]
 
-# TABLAS SIN CODIGO
+# 'DROPEAMOS' LA COLUMNA DEL 'CODIGO'
 table_menores = table_menores.iloc[: , 1:]
 table_ayudas = table_ayudas.iloc[: , 1:]
 table_notif = table_notif.iloc[: , 1:]
 table_acog = table_acog.iloc[: , 1:]
 table_medidas = table_medidas.iloc[: , 1:]
 
+# INFORMACIÓN BÁSICA DEL MENOR (Nombre, Edad, Fecha Nacimiento, ...)
 def getBasicInfo():
     aux = []
     aux.append(['Nombre', '???'])
@@ -49,6 +50,7 @@ def getBasicInfo():
 
     return aux
 
+# INFORMACIÓN DEL ESTADO DEL MENOR (Tipo de acogimiento, Desde cuando, ...)
 def getStateInfo():
     stateData = table_acog.sort_values('FECHAINI', ascending=False)
     tipoAcog = list(stateData['TIPOACOG'])[0]
@@ -68,17 +70,29 @@ def getStateInfo():
     return aux
 
 def getInstancesOfThisYear(table, columnId):
+    """
+    Devuelve la tabla con las instancias que pertenezcan a este año según la columna 'columnId'.
+    @param table: Tabla que se quiere filtrar.
+    @param columId: Columna de fechas con la que filtrar.
+    @return: La tabla con únicamente las instancias de este año.
+    """
     actualYear = int(str(date.today())[0:4])
     initYear = str(actualYear)
     endYear = str(actualYear+1)
     return table.query(f"{columnId} >= @initYear and {columnId} < @endYear")
 
-# INFORMACIÓN RECIENTE
+########################
+# INFORMACIÓN RECIENTE #
+########################
+#
+# Estas funciones devuelven la información reciente (del año en curso) del menor.
+# Todas las funciones devuelven un array con los valores que se quieren mostrar
+#
 
 def getAyudasPeriodicasRecientes():
     table = getInstancesOfThisYear(table_ayudas, 'FECSOLIC')
     table = table.query("TIPO=='P'")
-    
+
     return [[row['CONCEPTO'], row['TOTAL'], row['TOTALMES']] for _, row in table.iterrows()]
 
 def getAyudasNonPeriodicasRecientes():

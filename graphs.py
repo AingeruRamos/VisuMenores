@@ -4,20 +4,38 @@ import numpy as np
 
 import data
 
+# PALETA DE COLORES USADA PARA LAS GRÁFICAS
 COLORS = ['#636EFA', '#EF553B', '#00CC96', '#AB63FA', 
           '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', 
           '#FF97FF', '#FECB52']
 
 def addCumulativeBarPlot(fig, position, x_axis, y_axises, names, colors):
+    """
+    Permite añadir un 'Barplot' resultado de acumular distintas y_axis.
+    @param fig: Figura a la que añadir el 'Barplot'.
+    @param position: Posición del 'Barplot' dentro de la Figura.
+    @param x_axis: Eje x de 'Barplot'.
+    @param y_axises: Lista con los ejes y_axis que serán acumulados en el 'Barplot'.
+    @paramnames: Nombre de cada y_axis.
+    @param colors: Color de cada y_axis.
+    @return: None
+    """
     row, col = position
-    offset = np.zeros(len(x_axis))
+    offset = np.zeros(len(x_axis)) # Variable que permite acumular los valores en el 'Barplot'
 
     for i, y_axis in enumerate(y_axises): 
         fig.add_trace(go.Bar(name=names[i], x=x_axis, y=y_axis, 
                             offsetgroup=1, base=offset, showlegend=False,
                             marker_color=colors[i]),
                     row=row, col=col)
-        offset += y_axis
+        offset += y_axis # En cada ciclo, el offset aumenta para la correcta visualización
+
+###########################
+# FUNCIONES PARA GRÁFICAS #
+###########################
+#
+# Estas funciones devuelven la Figura que visualiza en forma gráfica la información.
+# La figura se compone de una visualización 'Pie' y un 'Barplot'.
 
 def getAyudasGraph():
     fig = make_subplots(rows=1, cols=2, specs=[[{"type": "pie"}, {"type": "scatter"}]])
